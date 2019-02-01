@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+import os
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -20,17 +21,7 @@ def loadData(source):
 
         return train_data, train_labels, eval_data, eval_labels
     else:
-        # test preprocessing
-        X_test = pd.read_csv('datasets/MNIST_test.csv', delimiter=',', header=0).values
-        m = len(X_test)
-        X_test = np.reshape(X_test, (m, 28, 28, 1))
-
-        X_mean = X_test.mean().astype(np.float32)
-        X_std = X_test.std().astype(np.float32)
-        X_test = (X_test - X_mean) / X_std
-
-        # train preprocessing
-        df_train = pd.read_csv('datasets/MNIST_train.csv', delimiter=',', header=0)
+        df_train = pd.read_csv(os.getcwd() + "\\datasets\\MNIST_train.csv", delimiter=',', header=0)
         Y_train, X_train = np.split(df_train.values, [1], axis=1)
         m = len(df_train)
 
@@ -42,36 +33,88 @@ def loadData(source):
 
         # data split to train / validation
         X_train, X_valid, Y_train, Y_valid = train_test_split(X_train, Y_train, test_size=0.1)
-        return X_train, Y_train, X_valid, Y_valid
+        return X_train.astype(np.float32), Y_train, X_valid.astype(np.float32), Y_valid
 
-def cnn_model_fn(features, labels, mode):
+def cnn_model_fn(features, labels, mode, params):
     """Model function for CNN."""
     input_layer = tf.reshape(features["x"], [-1, 28, 28, 1])
 
-    #conv1 = tf.layers.conv2d(inputs=input_layer, filters=32, kernel_size=[5, 5], padding="same", activation=tf.nn.relu)
-    #pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
-    #conv2 = tf.layers.conv2d(inputs=pool1, filters=64, kernel_size=[5, 5], padding="same", activation=tf.nn.relu)
-    #pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
-    #pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
-    #dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
-    #dropout = tf.layers.dropout(inputs=dense, rate=0.4, training=mode == tf.estimator.ModeKeys.TRAIN)
-    #logits = tf.layers.dense(inputs=dropout, units=10)
-
-    conv1 = tf.layers.conv2d(inputs=input_layer, filters=32, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
-    conv2 = tf.layers.conv2d(inputs=conv1, filters=64, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
-    conv3 = tf.layers.conv2d(inputs=conv2, filters=128, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
-    conv4 = tf.layers.conv2d(inputs=conv3, filters=256, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
-    conv4_flat = tf.reshape(conv4, [-1, 28 * 28 * 256])
-    dense = tf.layers.dense(inputs=conv4_flat, units=4096, activation=tf.nn.relu)
-    logits = tf.layers.dense(inputs=dense, units=10)
-
-    #hidden = tf.layers.conv2d(inputs=X, filters=32, kernel_size=[3, 3], strides=[1, 1], padding="same", activation=tf.nn.relu, name='conv1')
-    #hidden = tf.layers.conv2d(inputs=hidden, filters=64, kernel_size=[3, 3], strides=[2, 2], padding="same", activation=tf.nn.relu,  name='conv2')
-    #hidden = tf.layers.conv2d(inputs=hidden, filters=128, kernel_size=[3, 3], strides=[2, 2], padding="same", activation=tf.nn.relu, name='conv3')
-    #hidden = tf.layers.conv2d(inputs=hidden, filters=256, kernel_size=[3, 3], strides=[2, 2], padding="same", activation=tf.nn.relu, name='conv4')
-    #hidden = tf.contrib.layers.flatten(hidden)
-    #hidden = tf.layers.dense(hidden, 4096, activation=tf.nn.relu, name='dense1')
-    #output = tf.layers.dense(hidden, 10, activation=tf.nn.softmax, name='dense2')
+    if params["index"] == 1:
+        conv1 = tf.layers.conv2d(inputs=input_layer, filters=32, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
+        conv2 = tf.layers.conv2d(inputs=conv1, filters=64, kernel_size=[3, 3], strides=[2, 2], padding="same", activation=tf.nn.relu)
+        conv3 = tf.layers.conv2d(inputs=conv2, filters=128, kernel_size=[3, 3], strides=[2, 2], padding="same", activation=tf.nn.relu)
+        conv4 = tf.layers.conv2d(inputs=conv3, filters=256, kernel_size=[3, 3], strides=[2, 2], padding="same", activation=tf.nn.relu)
+        conv4_flat = tf.reshape(conv4, [-1, 4 * 4 * 256])
+        dense = tf.layers.dense(inputs=conv4_flat, units=4096, activation=tf.nn.relu)
+        logits = tf.layers.dense(inputs=dense, units=10)
+    elif params["index"] == 2:
+        conv1 = tf.layers.conv2d(inputs=input_layer, filters=32, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
+        conv2 = tf.layers.conv2d(inputs=conv1, filters=64, kernel_size=[3, 3], strides=[2, 2], padding="same", activation=tf.nn.relu)
+        conv3 = tf.layers.conv2d(inputs=conv2, filters=128, kernel_size=[3, 3], strides=[2, 2], padding="same", activation=tf.nn.relu)
+        conv4 = tf.layers.conv2d(inputs=conv3, filters=256, kernel_size=[3, 3], strides=[2, 2], padding="same", activation=tf.nn.relu)
+        conv4_flat = tf.reshape(conv4, [-1, 4 * 4 * 256])
+        dense = tf.layers.dense(inputs=conv4_flat, units=1024, activation=tf.nn.relu)
+        logits = tf.layers.dense(inputs=dense, units=10)
+    elif params["index"] == 3:
+        conv1 = tf.layers.conv2d(inputs=input_layer, filters=32, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
+        pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+        conv2 = tf.layers.conv2d(inputs=pool1, filters=64, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
+        pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
+        conv3 = tf.layers.conv2d(inputs=pool2, filters=128, kernel_size=[3, 3], strides=[2, 2], padding="same", activation=tf.nn.relu)
+        conv3_flat = tf.reshape(conv3, [-1, 4 * 4 * 128])
+        dense = tf.layers.dense(inputs=conv3_flat, units=4096, activation=tf.nn.relu)
+        logits = tf.layers.dense(inputs=dense, units=10)
+    elif params["index"] == 4:
+        conv1 = tf.layers.conv2d(inputs=input_layer, filters=32, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
+        pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+        conv2 = tf.layers.conv2d(inputs=pool1, filters=64, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
+        pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
+        conv3 = tf.layers.conv2d(inputs=pool2, filters=128, kernel_size=[3, 3], strides=[2, 2], padding="same", activation=tf.nn.relu)
+        conv3_flat = tf.reshape(conv3, [-1, 4 * 4 * 128])
+        dense = tf.layers.dense(inputs=conv3_flat, units=1024, activation=tf.nn.relu)
+        logits = tf.layers.dense(inputs=dense, units=10)
+    elif params["index"] == 5:
+        conv1 = tf.layers.conv2d(inputs=input_layer, filters=32, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
+        pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+        conv2 = tf.layers.conv2d(inputs=pool1, filters=64, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
+        pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
+        conv3 = tf.layers.conv2d(inputs=pool2, filters=128, kernel_size=[3, 3], strides=[2, 2], padding="same", activation=tf.nn.relu)
+        conv3_flat = tf.reshape(conv3, [-1, 4 * 4 * 128])
+        dense = tf.layers.dense(inputs=conv3_flat, units=1024, activation=tf.nn.relu, kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01))
+        logits = tf.layers.dense(inputs=dense, units=10)
+    elif params["index"] == 6:
+        conv1 = tf.layers.conv2d(inputs=input_layer, filters=32, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
+        pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+        conv2 = tf.layers.conv2d(inputs=pool1, filters=64, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
+        pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
+        pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
+        dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
+        logits = tf.layers.dense(inputs=dense, units=10)
+    elif params["index"] == 7:
+        conv1 = tf.layers.conv2d(inputs=input_layer, filters=32, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
+        pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+        conv2 = tf.layers.conv2d(inputs=pool1, filters=64, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
+        pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
+        pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
+        dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu, kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01))
+        logits = tf.layers.dense(inputs=dense, units=10)
+    elif params["index"] == 8:
+        conv1 = tf.layers.conv2d(inputs=input_layer, filters=32, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
+        pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+        conv2 = tf.layers.conv2d(inputs=pool1, filters=64, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)
+        pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
+        pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
+        dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu, kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1))
+        logits = tf.layers.dense(inputs=dense, units=10)
+    else:
+        conv1 = tf.layers.conv2d(inputs=input_layer, filters=32, kernel_size=[5, 5], padding="same", activation=tf.nn.relu)
+        pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+        conv2 = tf.layers.conv2d(inputs=pool1, filters=64, kernel_size=[5, 5], padding="same", activation=tf.nn.relu)
+        pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
+        pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
+        dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
+        dropout = tf.layers.dropout(inputs=dense, rate=0.4, training=mode == tf.estimator.ModeKeys.TRAIN)
+        logits = tf.layers.dense(inputs=dropout, units=10)
 
     predictions = {
         # Generate predictions (for PREDICT and EVAL mode)
@@ -97,32 +140,19 @@ def cnn_model_fn(features, labels, mode):
 
     # Add evaluation metrics (for EVAL mode)
     eval_metric_ops = {
-        "accuracy": tf.metrics.accuracy(
-            labels=labels, predictions=predictions["classes"])
+        "accuracy": tf.metrics.accuracy(labels=labels, predictions=predictions["classes"])
     }
-    return tf.estimator.EstimatorSpec(
-        mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
+    return tf.estimator.EstimatorSpec(mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
 # Load training and eval data
 train_data, train_labels, eval_data, eval_labels = loadData('local')
 
-# Create the Estimator
-mnist_classifier = tf.estimator.Estimator(
-    model_fn=cnn_model_fn, model_dir="c:/Users/matl/Disk Google/Projects/MNIST/outputs/model")
+# Train the model
+train_input_fn = tf.estimator.inputs.numpy_input_fn(x={"x": train_data}, y=train_labels, batch_size=64, num_epochs=2, shuffle=True)
 
 # Set up logging for predictions
-tensors_to_log = {"probabilities": "softmax_tensor"}
-
-logging_hook = tf.train.LoggingTensorHook(
-    tensors=tensors_to_log, every_n_iter=50)
-
-# Train the model
-train_input_fn = tf.estimator.inputs.numpy_input_fn(
-    x={"x": train_data},
-    y=train_labels,
-    batch_size=64,
-    num_epochs=2,
-    shuffle=True)
+#tensors_to_log = {"probabilities": "softmax_tensor"}
+#logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=50)
 
 # train one step and display the probabilties
 #mnist_classifier.train(
@@ -130,13 +160,27 @@ train_input_fn = tf.estimator.inputs.numpy_input_fn(
 #    steps=1,
 #    hooks=[logging_hook])
 
-mnist_classifier.train(input_fn=train_input_fn)#, steps=1000)
+models = {
+    0: "2*conv_5*5, 2*pool, dense_1024, drop_0.4",
+    1: "4*conv_3*3, dense_4096",
+    2: "4*conv_3*3, dense_1024",
+    3: "3*conv_3*3, 2*pool, dense_4096",
+    4: "3*conv_3*3, 2*pool, dense_1024",
+    5: "3*conv_3*3, 2*pool, dense_1024, l2reg_0.01",
+    6: "2*conv_3*3, 2*pool, dense_1024",
+    7: "2*conv_3*3, 2*pool, dense_1024, l2reg_0.01",
+    8: "2*conv_3*3, 2*pool, dense_1024, l2reg_0.1",
+}
+#i = 1
+for i in range(len(models)):
+    mnist_classifier = tf.estimator.Estimator(model_fn=cnn_model_fn, params={"index": i}, model_dir=os.getcwd() + "\\outputs\\model" + str(i))
 
-eval_input_fn = tf.estimator.inputs.numpy_input_fn(
-    x={"x": eval_data},
-    y=eval_labels,
-    num_epochs=1,
-    shuffle=False)
+    mnist_classifier.train(input_fn=train_input_fn, steps=50)
 
-eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)
-print(eval_results)
+    eval_input_fn = tf.estimator.inputs.numpy_input_fn(x={"x": eval_data}, y=eval_labels, num_epochs=1, shuffle=False)
+
+    eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)
+    f = open(os.getcwd() + "\\outputs\\results.txt", 'a')
+    f.write('model {:2}, acc: {:<10.6}, loss: {:<10.6}, steps: {}, description: {}\n'.format(i, eval_results["accuracy"], eval_results["loss"], eval_results["global_step"], models[i]))
+    print(eval_results)
+    f.close()
